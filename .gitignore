@@ -1,0 +1,73 @@
+# ===========================================
+# Pentaho-DBT Migration - .gitignore
+# ===========================================
+
+# -------------------------------------------
+# Client-specific DBT repository (separate Git repo)
+# -------------------------------------------
+tfses-dbt-snowflake-3030/
+*-dbt-snowflake-*/
+
+# -------------------------------------------
+# Client-specific data (don't commit to tooling repo)
+# -------------------------------------------
+# Pentaho source files (client ETL)
+pentaho-sources/*
+!pentaho-sources/.gitkeep
+
+# Migration output (generated per client)
+# Exclude ALL dimension/fact subfolders except .gitkeep
+dimensions/*
+!dimensions/.gitkeep
+facts/*
+!facts/.gitkeep
+
+# Config files with client data
+config/TABLE_COUNT.csv
+config/tables_columns_info.csv
+config/migration_registry.json
+
+# -------------------------------------------
+# Config with sensitive data
+# -------------------------------------------
+# Keep template, ignore actual config
+project.config.json
+!project.config.template.json
+
+# -------------------------------------------
+# Python / Node
+# -------------------------------------------
+__pycache__/
+*.py[cod]
+node_modules/
+.env
+.venv/
+venv/
+
+# -------------------------------------------
+# IDE / Editor
+# -------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# -------------------------------------------
+# OS files
+# -------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------------------------
+# Logs and temp files
+# -------------------------------------------
+*.log
+*.tmp
+*.temp
+
+# -------------------------------------------
+# Archive (old/obsolete files)
+# -------------------------------------------
+archive/

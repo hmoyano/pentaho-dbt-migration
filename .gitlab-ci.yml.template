@@ -1,0 +1,126 @@
+# GitLab CI/CD Pipeline for DBT Project
+# Place this file in the root of your tfses-dbt-snowflake-3030 repository as .gitlab-ci.yml
+
+# Pipeline stages
+stages:
+  - validate
+  - build
+  - test
+
+# Variables (configure these in GitLab UI: Settings > CI/CD > Variables)
+variables:
+  DBT_PROFILES_DIR: "$CI_PROJECT_DIR"
+  SNOWFLAKE_ACCOUNT: "${SNOWFLAKE_ACCOUNT}"  # Set in GitLab CI/CD variables
+  SNOWFLAKE_USER: "${SNOWFLAKE_USER}"        # Set in GitLab CI/CD variables
+  SNOWFLAKE_PASSWORD: "${SNOWFLAKE_PASSWORD}" # Set as masked variable
+  SNOWFLAKE_ROLE: "${SNOWFLAKE_ROLE}"
+  SNOWFLAKE_WAREHOUSE: "${SNOWFLAKE_WAREHOUSE}"
+  SNOWFLAKE_DATABASE: "${SNOWFLAKE_DATABASE}"
+  SNOWFLAKE_SCHEMA: "${SNOWFLAKE_SCHEMA}"
+
+# Default image with Python and dbt
+image: python:3.9-slim
+
+# Cache pip dependencies
+cache:
+  paths:
+    - .pip-cache/
+
+# Before script - install dependencies
+before_script:
+  - pip install --cache-dir .pip-cache/ dbt-snowflake dbt-utils
+  - dbt --version
+
+# Job 1: Validate syntax (dbt parse)
+dbt:parse:
+  stage: validate
+  script:
+    - echo "Running dbt parse to validate syntax..."
+    - dbt parse
+  only:
+    - branches
+  except:
+    - main
+
+# Job 2: Compile templates (dbt compile)
+dbt:compile:
+  stage: validate
+  script:
+    - echo "Running dbt compile to validate templates..."
+    - dbt compile
+  only:
+    - branches
+  except:
+    - main
+  needs:
+    - dbt:parse
+
+# Job 3: Build models (dbt run)
+dbt:run:
+  stage: build
+  script:
+    - echo "Extracting dimension tag from branch name..."
+    - |
+      if [[ "$CI_COMMIT_BRANCH" =~ migrate/(.+) ]]; then
+        DIMENSION="${BASH_REMATCH[1]}"
+        echo "Detected dimension: $DIMENSION"
+        echo "Running dbt for tag: $DIMENSION"
+        dbt run --select "tag:$DIMENSION"
+      else
+        echo "Not a migration branch, running all models"
+        dbt run
+      fi
+  only:
+    - branches
+  except:
+    - main
+  needs:
+    - dbt:compile
+
+# Job 4: Run tests (dbt test)
+dbt:test:
+  stage: test
+  script:
+    - echo "Extracting dimension tag from branch name..."
+    - |
+      if [[ "$CI_COMMIT_BRANCH" =~ migrate/(.+) ]]; then
+        DIMENSION="${BASH_REMATCH[1]}"
+        echo "Detected dimension: $DIMENSION"
+        echo "Running tests for tag: $DIMENSION"
+        dbt test --select "tag:$DIMENSION"
+      else
+        echo "Not a migration branch, testing all models"
+        dbt test
+      fi
+  only:
+    - branches
+  except:
+    - main
+  needs:
+    - dbt:run
+  allow_failure: false  # Tests must pass
+
+# Job 5: Generate and upload documentation (optional)
+dbt:docs:
+  stage: test
+  script:
+    - echo "Generating dbt documentation..."
+    - dbt docs generate
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 week
+  only:
+    - main
+  when: manual  # Run manually only
+
+# Production deployment job (main branch only)
+dbt:deploy:
+  stage: build
+  script:
+    - echo "Deploying to production..."
+    - dbt run --target prod
+    - dbt test --target prod
+  only:
+    - main
+  when: manual  # Require manual approval for production

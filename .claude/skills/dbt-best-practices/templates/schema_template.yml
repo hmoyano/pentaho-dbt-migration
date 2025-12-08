@@ -1,0 +1,341 @@
+version: 2
+
+#
+# Schema Template for DBT Model Documentation
+#
+# Purpose: Document models, columns, and tests for data governance and quality
+#
+# Guidelines:
+# - Every model should have a description
+# - Key columns should have descriptions
+# - Add tests for data quality (not_null, unique, relationships)
+# - Use meta tags for classification and governance
+# - Document calculated fields with examples
+#
+
+models:
+  - name: <MODEL_NAME>
+    description: |
+      <Brief description of the model's purpose and business use>
+
+      **Source System:** <SOURCE_SYSTEM (e.g., EKIP, ODS)>
+      **Layer:** <LAYER (bronze/silver/gold)>
+      **Grain:** <GRAIN (e.g., One row per contract, One row per transaction)>
+      **Refresh Frequency:** <FREQUENCY (e.g., Daily, Hourly, Real-time)>
+
+      **Business Logic:**
+      - <Key transformation 1>
+      - <Key transformation 2>
+      - <Any important business rules>
+
+      **Data Quality Notes:**
+      - <Any known issues or caveats>
+      - <Exclusions or filters applied>
+
+    meta:
+      owner: '<TEAM_OR_PERSON>'
+      layer: '<bronze|silver|gold>'
+      source_system: '<SOURCE_SYSTEM>'
+      contains_pii: <true|false>  # For data governance
+
+    config:
+      tags: ['<layer>', '<source_system>']
+
+    # Model-level tests
+    tests:
+      # Ensure no duplicate records on primary key
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - <pk_column>
+            # Add effective_date for SCD Type 2 dimensions
+            # - effective_date
+
+    columns:
+      # Primary Key
+      - name: <pk_column>
+        description: |
+          Primary key / Unique identifier for this <entity>.
+          <Any additional context about key generation>
+        tests:
+          - not_null
+          - unique
+
+      # Foreign Keys
+      - name: <fk_column_1>
+        description: |
+          Foreign key to {{ ref('dim_<related_table>') }}.
+          <Business meaning of this relationship>
+        tests:
+          - not_null  # If required
+          - relationships:
+              to: ref('dim_<related_table>')
+              field: <related_pk_column>
+
+      - name: <fk_column_2>
+        description: Foreign key to <related_dimension>
+        tests:
+          - relationships:
+              to: ref('dim_<related_table>')
+              field: <related_pk_column>
+
+      # Business Attributes
+      - name: <attribute_column_1>
+        description: |
+          <Business description of this column>
+          **Example values:** '<example_1>', '<example_2>', '<example_3>'
+        tests:
+          - not_null  # If required
+
+      - name: <status_column>
+        description: |
+          Status indicator for <entity>.
+          **Valid values:**
+          - 'A': Active
+          - 'I': Inactive
+          - 'P': Pending
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['A', 'I', 'P']
+              quote: true
+
+      - name: <type_column>
+        description: Type classification for <entity>
+        tests:
+          - accepted_values:
+              values: ['<type_1>', '<type_2>', '<type_3>']
+              quote: true
+
+      # Calculated Fields
+      - name: <calculated_column>
+        description: |
+          <Business meaning of calculation>
+
+          **Formula:** `<column_1> * <column_2> / <column_3>`
+
+          **Example:**
+          - If <column_1> = 100 and <column_2> = 1.5
+          - Then <calculated_column> = 150
+
+      # Measures (for fact tables)
+      - name: <amount_column>
+        description: |
+          <Business meaning of this measure>
+          **Unit:** <USD, units, etc.>
+          **Aggregation:** <SUM, AVG, etc.>
+        tests:
+          - not_null
+          # Optional: Add range checks
+          # - dbt_utils.expression_is_true:
+          #     expression: ">= 0"  # For amounts that can't be negative
+
+      # Date/Time Columns
+      - name: <date_column>
+        description: |
+          <Business meaning of this date>
+          **Format:** YYYY-MM-DD
+        tests:
+          - not_null
+
+      - name: <timestamp_column>
+        description: Timestamp when <event occurred>
+        tests:
+          - not_null
+
+      # SCD Type 2 Columns (for dimensions)
+      - name: effective_date
+        description: |
+          Start date when this version of the record became effective.
+          Used for Slowly Changing Dimension Type 2 tracking.
+        tests:
+          - not_null
+
+      - name: end_date
+        description: |
+          End date when this version of the record ceased to be effective.
+          '9999-12-31' indicates current/active record.
+        tests:
+          - not_null
+
+      - name: is_current
+        description: |
+          Flag indicating if this is the current/active version of the record.
+          - true: Current version
+          - false: Historical version
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+
+      # Metadata Columns
+      - name: _loaded_at
+        description: Timestamp when this record was loaded into the data warehouse
+        tests:
+          - not_null
+
+      - name: _source_system
+        description: Source system identifier (e.g., 'EKIP', 'ODS')
+        tests:
+          - not_null
+
+
+# Additional model examples for different scenarios:
+
+  # Example: Staging Model
+  - name: staging__ekip_contracts
+    description: |
+      Raw contract data from EKIP system with minimal transformation.
+
+      **Source:** EKIP.CONTRACTS table
+      **Grain:** One row per contract
+      **Refresh:** Daily at 2 AM UTC
+
+    config:
+      tags: ['bronze', 'ekip']
+
+    columns:
+      - name: contract_id
+        description: Unique contract identifier from EKIP
+        tests:
+          - not_null
+          - unique
+
+      - name: contract_number
+        description: Human-readable contract number
+        tests:
+          - not_null
+
+      - name: status
+        description: Contract status code
+        tests:
+          - accepted_values:
+              values: ['A', 'I', 'C', 'P']
+              quote: true
+
+
+  # Example: Intermediate Model
+  - name: intermediate__contracts
+    description: |
+      Transformed contract data with business logic applied.
+
+      **Source:** {{ ref('staging__ekip_contracts') }}
+      **Grain:** One row per contract
+      **Transformations:**
+      - Status mapping to human-readable values
+      - Duration calculations
+      - Data quality filters applied
+
+    config:
+      tags: ['silver', 'contracts']
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - contract_id
+
+
+  # Example: Dimension Model
+  - name: dim_customer
+    description: |
+      Customer dimension with SCD Type 2 for tracking changes over time.
+
+      **Grain:** One row per customer per effective date
+      **SCD Strategy:** Type 2 (track historical changes)
+
+    meta:
+      layer: 'gold'
+      contains_pii: true
+
+    config:
+      tags: ['gold', 'dimension']
+
+    columns:
+      - name: surrogate_key
+        description: Surrogate key (hash of customer_id + effective_date)
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: Natural key - business customer identifier
+        tests:
+          - not_null
+
+
+  # Example: Fact Model
+  - name: fact_sales
+    description: |
+      Sales transaction fact table.
+
+      **Grain:** One row per sales transaction line item
+      **Measures:** quantity, amount, cost, profit
+      **Dimensions:** customer, product, date, store
+
+    meta:
+      layer: 'gold'
+
+    config:
+      tags: ['gold', 'fact']
+
+    columns:
+      - name: transaction_id
+        description: Unique transaction identifier
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_key
+        description: Foreign key to dim_customer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: surrogate_key
+
+      - name: amount
+        description: Transaction amount in USD
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+
+# Source definitions (for staging layer)
+sources:
+  - name: <source_schema>
+    description: |
+      <Description of source system>
+
+      **System:** <SOURCE_SYSTEM_NAME>
+      **Owner:** <TEAM_OR_PERSON>
+      **Refresh:** <FREQUENCY>
+
+    database: <database_name>
+    schema: <schema_name>
+
+    # Source freshness checks
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+
+    loaded_at_field: <loaded_timestamp_column>
+
+    tables:
+      - name: <source_table_1>
+        description: |
+          <Description of source table>
+
+          **Grain:** <One row per...>
+          **Key Columns:** <pk_column>
+
+        columns:
+          - name: <pk_column>
+            description: Primary key
+            tests:
+              - not_null
+              - unique
+
+      - name: <source_table_2>
+        description: <Description>
+        # Disable freshness check for specific table if needed
+        freshness: null

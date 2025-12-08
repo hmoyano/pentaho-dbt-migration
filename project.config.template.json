@@ -1,0 +1,24 @@
+{
+  "project_name": "my-company-dbt-migration",
+
+  "paths": {
+    "dbt_repository": "./path-to-dbt-repo",
+    "pentaho_sources": "./pentaho-sources",
+    "dimensions_output": "./dimensions",
+    "facts_output": "./facts"
+  },
+
+  "snowflake": {
+    "database": "MY_DATABASE",
+    "schemas": {
+      "bronze": "RAW_DATA",
+      "silver": "STAGING",
+      "gold": "DIMENSIONAL"
+    }
+  },
+
+  "git": {
+    "protected_branches": ["main", "master", "develop"],
+    "branch_prefix": "migrate/"
+  }
+}

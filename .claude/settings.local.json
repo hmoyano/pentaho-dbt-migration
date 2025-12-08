@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(python:*)",
+      "Bash(mkdir:*)",
+      "Bash(./dbt.exe show:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat(gold): Add f_operations_status_history fact table with PowerBI view fields\n\n- Create f_operations_status_history.sql incremental fact table\n- Merge PowerBI view fields (DOSSIER, VERSION, FINANCIAL_PROPOSAL_ID,\n  CONTRACT_ID_REFINANCER, CONTRACT_ID_SUBROGANT, REFINANCED) directly\n- Add MILES source integration:\n  - stg_miles_contract_status_history.sql (ADQ layer)\n  - stg_miles_lifecycle.sql (ADQ layer)\n  - mas_miles_contract_status_history.sql (MAS layer)\n- Update sources.yml with MILES_LIFECYCLE table\n- Update mas_miles_contract.sql for status history support\n\nCombined EKIP (8.35M) and MILES (841K) records = 9.19M total\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
