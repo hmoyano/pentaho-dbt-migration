@@ -65,28 +65,55 @@ fi
 cd ..
 ```
 
-### 0.4 Create Feature Branch
+### 0.4 Git Sync & Create Feature Branch
 
 ```bash
 cd {dbt_repository}
 
-# Safety: Check if on protected branch
-CURRENT_BRANCH=$(git branch --show-current)
-PROTECTED=({protected_branches})
+# Step 1: Fetch latest from remote
+echo "Fetching latest from remote..."
+git fetch origin
 
-for branch in ${PROTECTED[@]}; do
-    if [ "$CURRENT_BRANCH" = "$branch" ]; then
-        echo "Warning: On protected branch, pulling and creating feature branch..."
-        git pull origin $CURRENT_BRANCH
+# Step 2: Determine base branch (develop > main > master)
+BASE_BRANCH=""
+for branch in develop main master; do
+    if git rev-parse --verify origin/$branch >/dev/null 2>&1; then
+        BASE_BRANCH=$branch
         break
     fi
 done
 
-# Create feature branch
-BRANCH_NAME="{branch_prefix}{{ DIMENSION_NAME }}"
-git checkout -b $BRANCH_NAME 2>/dev/null || git checkout $BRANCH_NAME
+if [ -z "$BASE_BRANCH" ]; then
+    echo "❌ ERROR: No base branch found (develop/main/master)"
+    exit 1
+fi
 
-echo "Working on branch: $BRANCH_NAME"
+echo "Base branch: $BASE_BRANCH"
+
+# Step 3: Update base branch
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" = "$BASE_BRANCH" ]; then
+    echo "Pulling latest $BASE_BRANCH..."
+    git pull origin $BASE_BRANCH
+fi
+
+# Step 4: Create or switch to feature branch
+BRANCH_NAME="{branch_prefix}{{ DIMENSION_NAME }}"
+
+# Check if branch exists on remote
+if git rev-parse --verify origin/$BRANCH_NAME >/dev/null 2>&1; then
+    echo "Feature branch exists on remote, checking out and pulling..."
+    git checkout $BRANCH_NAME 2>/dev/null || git checkout -b $BRANCH_NAME origin/$BRANCH_NAME
+    git pull origin $BRANCH_NAME
+else
+    # Create new branch from base
+    echo "Creating new feature branch from $BASE_BRANCH..."
+    git checkout $BASE_BRANCH
+    git pull origin $BASE_BRANCH
+    git checkout -b $BRANCH_NAME
+fi
+
+echo "✅ Working on branch: $BRANCH_NAME (based on $BASE_BRANCH)"
 cd ..
 ```
 
