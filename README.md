@@ -183,11 +183,14 @@ See [docs/HELPER_AGENTS.md](docs/HELPER_AGENTS.md) for when to use helper agents
 - `pentaho-parser` - Extracts metadata from Pentaho XML
 - `oracle-snowflake-rules` - SQL translation patterns
 - `dbt-best-practices` - Templates and naming conventions
+- `git-workflow` - Git sync, branching, and commit operations
 
 **Commands** (Workflow orchestrators):
-- `/improve <dimension>` - Test improvements locally
-- `/migrate <dimension>` - Production migration with git
-- `/migration-status [dimension]` - Check progress
+- `/migrate <entity>` - Full migration with git (dimension or fact)
+- `/improve <entity>` - Test improvements locally (no git)
+- `/pause-model-migration <entity>` - Pause incomplete migration
+- `/continue-migration <entity>` - Resume paused OR modify completed (smart detection)
+- `/migration-status [entity]` - Check progress
 
 ---
 

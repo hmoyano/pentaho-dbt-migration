@@ -611,10 +611,12 @@ Uses `TABLE_COUNT.csv` for row count lookup.
 ### Migration Commands
 
 ```bash
-/migrate {dimension}          # Full migration with git push
-/improve {dimension}          # Test locally (no git)
-/migration-status             # Check all dimensions
-/migration-status {dimension} # Check specific dimension
+/migrate {entity}                # Full migration with git push (dimension or fact)
+/improve {entity}                # Test locally (no git)
+/pause-model-migration {entity}  # Pause incomplete migration
+/continue-migration {entity}     # Resume paused OR modify completed (smart)
+/migration-status                # Check all entities
+/migration-status {entity}       # Check specific entity
 ```
 
 ### DBT Commands (Local)

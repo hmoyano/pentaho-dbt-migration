@@ -67,55 +67,20 @@ cd ..
 
 ### 0.4 Git Sync & Create Feature Branch
 
-```bash
-cd {dbt_repository}
+**Use `git-workflow` skill - operation: `sync-and-branch`**
 
-# Step 1: Fetch latest from remote
-echo "Fetching latest from remote..."
-git fetch origin
+Read and execute the script from `.claude/skills/git-workflow/SKILL.md` (section 1).
 
-# Step 2: Determine base branch (develop > main > master)
-BASE_BRANCH=""
-for branch in develop main master; do
-    if git rev-parse --verify origin/$branch >/dev/null 2>&1; then
-        BASE_BRANCH=$branch
-        break
-    fi
-done
+Parameters:
+- `{dbt_repository}` - from config
+- `{branch_prefix}` - from config (default: `migrate/`)
+- `{entity_name}` - {{ DIMENSION_NAME }}
 
-if [ -z "$BASE_BRANCH" ]; then
-    echo "❌ ERROR: No base branch found (develop/main/master)"
-    exit 1
-fi
-
-echo "Base branch: $BASE_BRANCH"
-
-# Step 3: Update base branch
-CURRENT_BRANCH=$(git branch --show-current)
-if [ "$CURRENT_BRANCH" = "$BASE_BRANCH" ]; then
-    echo "Pulling latest $BASE_BRANCH..."
-    git pull origin $BASE_BRANCH
-fi
-
-# Step 4: Create or switch to feature branch
-BRANCH_NAME="{branch_prefix}{{ DIMENSION_NAME }}"
-
-# Check if branch exists on remote
-if git rev-parse --verify origin/$BRANCH_NAME >/dev/null 2>&1; then
-    echo "Feature branch exists on remote, checking out and pulling..."
-    git checkout $BRANCH_NAME 2>/dev/null || git checkout -b $BRANCH_NAME origin/$BRANCH_NAME
-    git pull origin $BRANCH_NAME
-else
-    # Create new branch from base
-    echo "Creating new feature branch from $BASE_BRANCH..."
-    git checkout $BASE_BRANCH
-    git pull origin $BASE_BRANCH
-    git checkout -b $BRANCH_NAME
-fi
-
-echo "✅ Working on branch: $BRANCH_NAME (based on $BASE_BRANCH)"
-cd ..
-```
+This will:
+1. Fetch latest from remote
+2. Find base branch (develop > main > master)
+3. Pull latest base branch
+4. Create feature branch or checkout existing from remote
 
 ### 0.5 Repository Analysis
 

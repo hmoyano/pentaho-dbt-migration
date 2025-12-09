@@ -87,17 +87,19 @@ This ensures no surprises and gives you full control over the migration process.
 │   │   ├── migration-docs-generator.md  # NEW
 │   │   └── learning-logger.md
 │   │
-│   ├── commands/                  # Workflow orchestration (6 commands)
+│   ├── commands/                  # Workflow orchestration (5 commands)
 │   │   ├── migrate.md             # Full pipeline with git
 │   │   ├── improve.md             # Test locally (no git)
-│   │   ├── continue-migration.md  # Modify existing migrations
+│   │   ├── continue-migration.md  # Resume paused OR modify completed
+│   │   ├── pause-model-migration.md # Pause incomplete migration
 │   │   ├── migration-status.md    # Check progress
 │   │   └── _pipeline_steps.md     # Shared pipeline logic
 │   │
-│   └── skills/                    # Deterministic operations (4 skills)
+│   └── skills/                    # Deterministic operations (5 skills)
 │       ├── pentaho-parser/        # Parse Pentaho XML
 │       ├── oracle-snowflake-rules/# SQL translation rules
 │       ├── dbt-best-practices/    # DBT templates & conventions
+│       ├── git-workflow/          # Git sync, branching, commits
 │       └── sql-translation-rules/ # Additional SQL rules
 │
 ├── config/
@@ -343,12 +345,29 @@ left join enum_translations enum_ins
 
 ### Quick Start
 ```bash
-# Run complete migration for a dimension
+# Run complete migration for a dimension or fact
 /migrate dim_approval_level
+/migrate f_operations
 
 # Check migration status
 /migration-status dim_approval_level
+
+# Pause if dependencies missing
+/pause-model-migration dim_approval_level
+
+# Continue (auto-detects: resume paused OR modify completed)
+/continue-migration dim_approval_level
 ```
+
+### Commands Overview
+
+| Command | Purpose |
+|---------|---------|
+| `/migrate {entity}` | Start new migration (creates feature branch) |
+| `/improve {entity}` | Test locally without git operations |
+| `/pause-model-migration {entity}` | Pause incomplete migration |
+| `/continue-migration {entity}` | Resume paused OR modify completed |
+| `/migration-status {entity}` | Check current status |
 
 ### Step-by-Step
 ```bash

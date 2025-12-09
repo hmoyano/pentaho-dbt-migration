@@ -7,8 +7,8 @@ This directory contains all Claude Code automation for the Pentaho-to-DBT migrat
 ```
 .claude/
 ├── agents/                   # 13 AI-powered agents
-├── commands/                 # 6 workflow commands
-└── skills/                   # 3 deterministic skills
+├── commands/                 # 5 workflow commands
+└── skills/                   # 5 deterministic skills
 ```
 
 ## Quick Start
@@ -23,7 +23,10 @@ cat project.config.json
 # Full migration with git
 /migrate dim_your_dimension
 
-# Modify existing
+# Pause if dependencies missing
+/pause-model-migration dim_your_dimension
+
+# Resume or modify (smart detection)
 /continue-migration dim_your_dimension
 ```
 
@@ -33,8 +36,18 @@ cat project.config.json
 |---------|---------|-----|
 | `/migrate` | Full pipeline | Yes |
 | `/improve` | Local testing | No |
-| `/continue-migration` | Modify existing | Yes |
+| `/pause-model-migration` | Pause incomplete | Yes |
+| `/continue-migration` | Resume paused OR modify completed | Yes |
 | `/migration-status` | Check progress | No |
+
+## Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `pentaho-parser` | Parse Pentaho XML files |
+| `oracle-snowflake-rules` | SQL translation rules |
+| `dbt-best-practices` | Templates and conventions |
+| `git-workflow` | Git sync, branching, commits |
 
 ## Configuration
 

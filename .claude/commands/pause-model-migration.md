@@ -30,34 +30,17 @@ Extract:
 
 ## Step 0.5: Git Sync
 
-**Sync with remote before making changes:**
+**Use `git-workflow` skill - operation: `sync-current`**
 
-```bash
-cd {dbt_repository}
+Read and execute the script from `.claude/skills/git-workflow/SKILL.md` (section 2).
 
-# Fetch latest from remote
-git fetch origin
+Parameters:
+- `{dbt_repository}` - from config
 
-# Get current branch
-CURRENT_BRANCH=$(git branch --show-current)
-echo "Current branch: $CURRENT_BRANCH"
-
-# Pull latest changes for current branch (if it exists on remote)
-if git rev-parse --verify origin/$CURRENT_BRANCH >/dev/null 2>&1; then
-    echo "Pulling latest changes..."
-    git pull origin $CURRENT_BRANCH
-else
-    echo "Branch $CURRENT_BRANCH is local only (not yet pushed)"
-fi
-
-# Check for uncommitted changes
-if ! git diff --quiet || ! git diff --staged --quiet; then
-    echo "⚠️ WARNING: You have uncommitted changes"
-    git status --short
-fi
-
-cd ..
-```
+This will:
+1. Fetch latest from remote
+2. Pull current branch if exists on remote
+3. Warn about uncommitted changes
 
 ---
 
