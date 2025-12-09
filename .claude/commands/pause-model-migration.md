@@ -28,6 +28,39 @@ Extract:
 
 ---
 
+## Step 0.5: Git Sync
+
+**Sync with remote before making changes:**
+
+```bash
+cd {dbt_repository}
+
+# Fetch latest from remote
+git fetch origin
+
+# Get current branch
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Current branch: $CURRENT_BRANCH"
+
+# Pull latest changes for current branch (if it exists on remote)
+if git rev-parse --verify origin/$CURRENT_BRANCH >/dev/null 2>&1; then
+    echo "Pulling latest changes..."
+    git pull origin $CURRENT_BRANCH
+else
+    echo "Branch $CURRENT_BRANCH is local only (not yet pushed)"
+fi
+
+# Check for uncommitted changes
+if ! git diff --quiet || ! git diff --staged --quiet; then
+    echo "⚠️ WARNING: You have uncommitted changes"
+    git status --short
+fi
+
+cd ..
+```
+
+---
+
 ## Purpose
 
 This command is used when:
